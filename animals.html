@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Runner Raposa - Velocidade Ajustada</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+  <style>
+    body { margin: 0; background: #000; overflow: hidden; touch-action: none; }
+  </style>
+</head>
+<body>
+
+<script>
+let player, cursors, bg1, bg2;
+let isJumping = false;
+
+// 🐢 VELOCIDADE REDUZIDA: Mudei de 6 para 3 para ficar mais calmo
+let scrollSpeed = 3;
+
+const config = {
+  type: Phaser.CANVAS,
+  width: 800,
+  height: 450,
+  backgroundColor: '#4488aa',
+  pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  physics: {
+    default: "arcade",
+    arcade: { gravity: { y: 1600 }, debug: false }
+  },
+  scene: { preload, create, update }
+};
+
+const game = new Phaser.Game(config);
+
+function preload() {
+  this.load.image("bg1", "zoo_dia.png");
+  this.load.image("bg2", "zoo_noite.png");
+  this.load.spritesheet("raposa", "raposa.png", {
+    frameWidth: 74, frameHeight: 90
+  });
+}
+
+function create() {
+  const w = 800;
+  const h = 450;
+
+  bg1 = this.add.image(w/2, h/2, "bg1").setDisplaySize(w, h);
+  bg2 = this.add.image(w + w/2, h/2, "bg2").setDisplaySize(w, h);
+
+  const groundY = h - 60;
+
+  let ground = this.add.rectangle(w, groundY + 30, w * 4, 60, 0x000000, 0);
+  this.physics.add.existing(ground, true);
+
+  player = this.physics.add.sprite(150, groundY - 50, "raposa");
+  player.setDisplaySize(100, 100);
+  player.setCollideWorldBounds(true);
+
+  this.physics.add.collider(player, ground);
+
+  // 🏃 ANIMAÇÕES AJUSTADAS
+  this.anims.create({
+    key: "run",
+    frames: this.anims.generateFrameNumbers("raposa", { start: 0, end: 4 }),
+    frameRate: 8, // Diminuí de 12 para 8 para as patas não mexerem freneticamente
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: "jump",
+    frames: this.anims.generateFrameNumbers("raposa", { start: 5, end: 9 }),
+    frameRate: 8
+  });
+
+  player.play("run");
+
+  this.input.on('pointerdown', () => {
+    if (player.body.blocked.down) {
+      player.setVelocityY(-750);
+      player.play("jump", true);
+    }
+  });
+
+  cursors = this.input.keyboard.createCursorKeys();
+}
+
+function update() {
+  if (!player) return;
+  player.x = 150;
+
+  bg1.x -= scrollSpeed;
+  bg2.x -= scrollSpeed;
+
+  if (bg1.x <= -400) bg1.x = bg2.x + 800;
+  if (bg2.x <= -400) bg2.x = bg1.x + 800;
+
+  if (player.body.blocked.down) {
+      if (player.anims.currentAnim.key !== "run") {
+          player.play("run", true);
+      }
+  } else {
+      if (player.anims.currentAnim.key !== "jump") {
+          player.play("jump", true);
+      }
+  }
+}
+</script>
+</body>
+</html>
